@@ -34,8 +34,11 @@ jobs:
       - name: Build
         run: npm run build:github
         
+      # Deploy to GitHub Pages - This places the files at the root of the gh-pages branch
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: public
-          branch: gh-pages
+          folder: public          # Source folder with built files
+          branch: gh-pages        # Branch to deploy to
+          clean: true             # Automatically remove deleted files
+          single-commit: true     # Only keep latest commit in gh-pages branch
