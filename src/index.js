@@ -11,6 +11,8 @@ const API_KEY = GOOGLE_API_CONFIG?.API_KEY || process.env.GOOGLE_API_KEY;
 // Store classes data
 let classesData = [];
 let currentClassId = null;
+// Default filter for classes (ACTIVE or ARCHIVED)
+let currentClassFilter = 'ACTIVE';
 
 // Define the API scopes
 const SCOPES = 'https://www.googleapis.com/auth/classroom.courses.readonly ' +
