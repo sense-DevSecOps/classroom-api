@@ -34,7 +34,6 @@ let classesList;
 let statusMessage;
 let loadingIndicator;
 let signoutButton;
-let saveCredentialsButton;
 let refreshClassesButton;
 let welcomeCard;
 let classDetailCard;
@@ -43,6 +42,7 @@ let assignmentsCard;
 let submissionsCard;
 let activeClassesButton;
 let archivedClassesButton;
+let googleSigninButton;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     statusMessage = document.getElementById('status-message');
     loadingIndicator = document.getElementById('loading');
     signoutButton = document.getElementById('signout-button');
-    saveCredentialsButton = document.getElementById('save-credentials');
+    googleSigninButton = document.getElementById('google-signin-button');
     refreshClassesButton = document.getElementById('refresh-classes');
     
     // Content cards
@@ -63,25 +63,19 @@ document.addEventListener('DOMContentLoaded', () => {
     assignmentsCard = document.getElementById('assignments-card');
     submissionsCard = document.getElementById('submissions-card');
     
-    // Initialize the app
+    // Auto-initialize on page load
     initApp();
 });
 
 // Initialize the application
 function initApp() {
-    // Show credentials status
-    const credentialsInfo = document.getElementById('credentials-info');
-    if (CLIENT_ID && API_KEY) {
-        credentialsInfo.textContent = 'API credentials are securely loaded from environment variables.';
-        showMessage('Credentials loaded. Click \'Initialize API\' to proceed.');
-        saveCredentialsButton.textContent = 'Initialize API';
-    } else {
-        credentialsInfo.textContent = 'ERROR: API credentials not found in environment variables.';
-        showMessage('Missing API credentials. Please check your .env file and rebuild.', true);
+    // Verify API credentials are available
+    if (!CLIENT_ID || !API_KEY) {
+        showMessage('Error: API credentials not found. Please check configuration.', true);
+        return;
     }
     
     // Setup event listeners
-    saveCredentialsButton.addEventListener('click', initializeGoogleApiClient);
     signoutButton.addEventListener('click', handleSignOut);
     refreshClassesButton.addEventListener('click', fetchClasses);
     document.getElementById('view-submissions').addEventListener('click', viewSelectedSubmissions);
@@ -97,6 +91,10 @@ function initApp() {
     archivedClassesButton.addEventListener('click', () => {
         setClassFilter('ARCHIVED');
     });
+    
+    // Automatically initialize the API
+    showMessage('Initializing Google Classroom API...');
+    initializeGoogleApiClient();
 }
 
 // Initialize token client
@@ -203,6 +201,22 @@ function initializeGoogleAuth() {
     console.log("Initializing Google authentication with client ID");
     
     try {
+        // Create a custom Google Sign In button
+        googleSigninButton.innerHTML = '';
+        const button = document.createElement('button');
+        button.className = 'google-btn';
+        button.innerHTML = `
+            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
+            <span>Sign in with Google</span>
+        `;
+        button.onclick = () => {
+            // Trigger the OAuth flow when button is clicked
+            if (!isAuthenticated) {
+                tokenClient.requestAccessToken();
+            }
+        };
+        googleSigninButton.appendChild(button);
+        
         // Initialize the token client for OAuth 2.0 flow
         tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,

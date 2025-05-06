@@ -231,7 +231,51 @@
         }
         
         #google-signin-button {
-            margin: 10px 0;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .google-btn {
+            display: inline-flex;
+            align-items: center;
+            background-color: white;
+            color: #737373;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            font-family: 'Roboto', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            height: 40px;
+            padding: 0 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .google-btn:hover {
+            background-color: #f8f9fa;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+        
+        .google-btn img {
+            height: 18px;
+            margin-right: 8px;
+        }
+        
+        #signout-button {
+            background-color: #f1f3f4;
+            color: #3c4043;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            display: block;
+            margin: 10px auto;
+        }
+        
+        #signout-button:hover {
+            background-color: #e8eaed;
         }
     </style>
 </head>
@@ -241,20 +285,13 @@
     </div>
     
     <div class="content-area" id="setup-area">
-        <div class="config-section">
-            <h2 id="credentials-header">API Configuration</h2>
-            <p id="credentials-info">API credentials are securely loaded via environment variables.</p>
-            <button id="save-credentials">Initialize API</button>
-            
-            <div style="margin-top: 15px; padding: 10px; background-color: #e8f0fe; border-left: 4px solid #1a73e8;">
-                <h3 style="margin-top: 0;">Common Issues Troubleshooting</h3>
-                <p><strong>"Not a valid origin for the client"</strong>: If you see this error, you need to add <code>http://localhost:9000</code> to the list of authorized JavaScript origins in your Google Cloud Console.</p>
-                <p><strong>"idpiframe_initialization_failed"</strong>: This error occurs because of outdated OAuth libraries. The code has been updated to use only the newer Google Identity Services.</p>
-            </div>
+        <div class="welcome-section">
+            <h2>Google Classroom API Tool</h2>
+            <p>Access and manage your Google Classroom data</p>
         </div>
         
         <div id="status-message" class="status"></div>
-        <div id="loading">Loading data...</div>
+        <div id="loading">Loading API...</div>
         
         <div id="auth-section">
             <!-- Google Sign In button will be inserted here -->
