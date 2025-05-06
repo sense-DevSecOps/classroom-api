@@ -201,23 +201,8 @@ function initializeGoogleAuth() {
     console.log("Initializing Google authentication with client ID");
     
     try {
-        // Create a custom Google Sign In button
-        googleSigninButton.innerHTML = '';
-        const button = document.createElement('button');
-        button.className = 'google-btn';
-        button.innerHTML = `
-            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
-            <span>Sign in with Google</span>
-        `;
-        button.onclick = () => {
-            // Trigger the OAuth flow when button is clicked
-            if (!isAuthenticated) {
-                tokenClient.requestAccessToken();
-            }
-        };
-        googleSigninButton.appendChild(button);
-        
-        // Initialize the token client for OAuth 2.0 flow
+        // First initialize the token client for OAuth 2.0 flow
+        console.log("Creating token client with client ID", CLIENT_ID ? "(valid)" : "(missing)");
         tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
             scope: SCOPES,
@@ -230,7 +215,6 @@ function initializeGoogleAuth() {
                     isAuthenticated = true;
                     
                     console.log("Authentication successful, updating UI");
-                    // Update UI for signed-in state
                     updateUIForSignIn(true);
                     
                     // Load user classes
@@ -251,9 +235,27 @@ function initializeGoogleAuth() {
             }
         });
         
+        // Now that tokenClient is initialized, set up the button click handler
+        const manualGoogleBtn = document.getElementById('manual-google-btn');
+        if (manualGoogleBtn) {
+            console.log("Setting up Google Sign In button click handler");
+            manualGoogleBtn.onclick = () => {
+                // Trigger the OAuth flow when button is clicked
+                console.log('Google Sign In button clicked');
+                if (!isAuthenticated && tokenClient) {
+                    showMessage("Starting Google authentication...");
+                    tokenClient.requestAccessToken();
+                } else if (isAuthenticated) {
+                    showMessage("Already authenticated!");
+                } else {
+                    showMessage("Token client not initialized. Please refresh the page.", true);
+                }
+            };
+        } else {
+            console.error('Manual Google button not found in the DOM');
+        }
+        
         console.log("Token client initialized successfully");
-        // Setup the sign-in button
-        setupSignInButton();
         
     } catch (error) {
         console.error("Error initializing auth", error);
@@ -262,21 +264,7 @@ function initializeGoogleAuth() {
     }
 }
 
-// Set up Google Sign-In button
-function setupSignInButton() {
-    const signInButton = document.getElementById('google-signin-button');
-    signInButton.innerHTML = '';
-    
-    const customButton = document.createElement('button');
-    customButton.textContent = 'Sign in with Google';
-    customButton.classList.add('button');
-    customButton.addEventListener('click', () => {
-        tokenClient.requestAccessToken();
-    });
-    
-    signInButton.appendChild(customButton);
-    showMessage("Authentication ready. Please sign in with your Google account.");
-}
+// Previously had setupSignInButton function here - removed as we now use prerendered button
 
 // Update UI based on sign-in status
 function updateUIForSignIn(isSignedIn) {
