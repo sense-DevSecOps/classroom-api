@@ -96,6 +96,40 @@
             font-size: 14px;
         }
         
+        .refresh-button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .class-filter-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .filter-button {
+            background-color: #f1f3f4;
+            color: #3c4043;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .filter-button.active {
+            background-color: #e8f0fe;
+            color: #1967d2;
+            font-weight: bold;
+        }
+        
         button:hover {
             background-color: #3367d6;
         }
@@ -234,6 +268,10 @@
             <div style="padding: 15px;">
                 <button id="refresh-classes" class="refresh-button">Refresh Classes</button>
                 <h2>My Classes</h2>
+                <div class="class-filter-buttons">
+                    <button id="active-classes-btn" class="filter-button active">Active Classes</button>
+                    <button id="archived-classes-btn" class="filter-button">Archived Classes</button>
+                </div>
             </div>
             <div id="classes-list">
                 <!-- Classes will be listed here -->

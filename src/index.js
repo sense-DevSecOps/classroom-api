@@ -39,6 +39,8 @@ let classDetailCard;
 let studentsCard;
 let assignmentsCard;
 let submissionsCard;
+let activeClassesButton;
+let archivedClassesButton;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
@@ -81,6 +83,18 @@ function initApp() {
     signoutButton.addEventListener('click', handleSignOut);
     refreshClassesButton.addEventListener('click', fetchClasses);
     document.getElementById('view-submissions').addEventListener('click', viewSelectedSubmissions);
+    
+    // Setup filter buttons
+    activeClassesButton = document.getElementById('active-classes-btn');
+    archivedClassesButton = document.getElementById('archived-classes-btn');
+    
+    activeClassesButton.addEventListener('click', () => {
+        setClassFilter('ACTIVE');
+    });
+    
+    archivedClassesButton.addEventListener('click', () => {
+        setClassFilter('ARCHIVED');
+    });
 }
 
 // Initialize token client
@@ -285,6 +299,114 @@ function checkAuthentication() {
 }
 
 // Fetch classes and populate sidebar
+// Set the class filter and update the display
+function setClassFilter(filter) {
+    currentClassFilter = filter;
+    
+    // Update button styles
+    if (filter === 'ACTIVE') {
+        activeClassesButton.classList.add('active');
+        archivedClassesButton.classList.remove('active');
+    } else {
+        activeClassesButton.classList.remove('active');
+        archivedClassesButton.classList.add('active');
+    }
+    
+    // Display classes with the current filter
+    displayFilteredClasses();
+}
+
+// Display classes based on the current filter
+function displayFilteredClasses() {
+    if (!classesData || classesData.length === 0) {
+        // No data available, possibly fetch first
+        fetchClasses();
+        return;
+    }
+    
+    // Clear existing classes display
+    classesList.innerHTML = '';
+    
+    // Filter classes by current filter
+    const filteredCourses = classesData.filter(course => course.courseState === currentClassFilter);
+    
+    if (filteredCourses.length > 0) {
+        filteredCourses.forEach(displayClassItem);
+        showMessage(`Showing ${filteredCourses.length} ${currentClassFilter.toLowerCase()} classes.`);
+    } else {
+        const noClassesMsg = document.createElement('div');
+        noClassesMsg.className = 'class-item';
+        noClassesMsg.textContent = `No ${currentClassFilter.toLowerCase()} classes found.`;
+        classesList.appendChild(noClassesMsg);
+        
+        showMessage(`No ${currentClassFilter.toLowerCase()} classes found.`);
+    }
+}
+
+// Display a class item in the list
+function displayClassItem(course) {
+    const classItem = document.createElement('div');
+    classItem.className = 'class-item';
+    classItem.dataset.id = course.id;
+    
+    const className = document.createElement('div');
+    className.className = 'class-name';
+    className.textContent = course.name;
+    
+    const classSection = document.createElement('div');
+    classSection.textContent = course.section || '';
+    
+    const classOptions = document.createElement('div');
+    classOptions.className = 'class-options';
+    
+    const detailsOption = document.createElement('span');
+    detailsOption.className = 'class-option';
+    detailsOption.textContent = 'Details';
+    detailsOption.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showClassDetails(course.id);
+    });
+    
+    const studentsOption = document.createElement('span');
+    studentsOption.className = 'class-option';
+    studentsOption.textContent = 'Students';
+    studentsOption.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fetchStudents(course.id);
+    });
+    
+    const assignmentsOption = document.createElement('span');
+    assignmentsOption.className = 'class-option';
+    assignmentsOption.textContent = 'Assignments';
+    assignmentsOption.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fetchAssignments(course.id);
+    });
+    
+    const submissionsOption = document.createElement('span');
+    submissionsOption.className = 'class-option';
+    submissionsOption.textContent = 'Submissions';
+    submissionsOption.addEventListener('click', (e) => {
+        e.stopPropagation();
+        prepareSubmissions(course.id);
+    });
+    
+    classOptions.appendChild(detailsOption);
+    classOptions.appendChild(studentsOption);
+    classOptions.appendChild(assignmentsOption);
+    classOptions.appendChild(submissionsOption);
+    
+    classItem.appendChild(className);
+    classItem.appendChild(classSection);
+    classItem.appendChild(classOptions);
+    
+    classItem.addEventListener('click', () => {
+        showClassDetails(course.id);
+    });
+    
+    classesList.appendChild(classItem);
+}
+
 function fetchClasses() {
     if (!checkAuthentication()) {
         return;
@@ -298,87 +420,25 @@ function fetchClasses() {
     classesData = [];
     
     // Log the request for debugging
-    console.log("Fetching classes with all states");
+    console.log("Fetching all classes to filter later");
     
-    // Fetch all classes (active, archived, provisioned, etc.)
+    // Fetch all classes (we'll filter them client-side)
     gapi.client.classroom.courses.list({
         pageSize: 100,  // Increased to maximum allowed
-        // Include all possible course states to show everything
+        // Include all class states to have them available for filtering
         courseStates: ["ACTIVE", "ARCHIVED", "PROVISIONED", "DECLINED", "SUSPENDED"]
     }).then((response) => {
         console.log("Received classes response:", response);
         const courses = response.result.courses || [];
         classesData = courses;
         
-        if (courses.length > 0) {
-            courses.forEach((course) => {
-                const classItem = document.createElement('div');
-                classItem.className = 'class-item';
-                classItem.dataset.id = course.id;
-                
-                const className = document.createElement('div');
-                className.className = 'class-name';
-                className.textContent = course.name;
-                
-                const classSection = document.createElement('div');
-                classSection.textContent = course.section || '';
-                
-                const classOptions = document.createElement('div');
-                classOptions.className = 'class-options';
-                
-                const detailsOption = document.createElement('span');
-                detailsOption.className = 'class-option';
-                detailsOption.textContent = 'Details';
-                detailsOption.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    showClassDetails(course.id);
-                });
-                
-                const studentsOption = document.createElement('span');
-                studentsOption.className = 'class-option';
-                studentsOption.textContent = 'Students';
-                studentsOption.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    fetchStudents(course.id);
-                });
-                
-                const assignmentsOption = document.createElement('span');
-                assignmentsOption.className = 'class-option';
-                assignmentsOption.textContent = 'Assignments';
-                assignmentsOption.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    fetchAssignments(course.id);
-                });
-                
-                const submissionsOption = document.createElement('span');
-                submissionsOption.className = 'class-option';
-                submissionsOption.textContent = 'Submissions';
-                submissionsOption.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    prepareSubmissions(course.id);
-                });
-                
-                classOptions.appendChild(detailsOption);
-                classOptions.appendChild(studentsOption);
-                classOptions.appendChild(assignmentsOption);
-                classOptions.appendChild(submissionsOption);
-                
-                classItem.appendChild(className);
-                classItem.appendChild(classSection);
-                classItem.appendChild(classOptions);
-                
-                classItem.addEventListener('click', () => {
-                    showClassDetails(course.id);
-                });
-                
-                classesList.appendChild(classItem);
-            });
-            
-            showMessage(`Successfully loaded ${courses.length} classes.`);
-        } else {
+        // Display classes based on current filter (ACTIVE by default)
+        displayFilteredClasses();
+        
+        if (courses.length === 0) {
             const noClassesMsg = document.createElement('div');
             noClassesMsg.className = 'class-item';
-            noClassesMsg.textContent = 'No classes found.';
+            noClassesMsg.textContent = 'No classes found at all.';
             classesList.appendChild(noClassesMsg);
             
             showMessage("No classes found. Are you sure you're enrolled in any Google Classroom courses?");
