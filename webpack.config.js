@@ -1,8 +1,9 @@
 const path = require('path');
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const Dotenv = require('dotenv-webpack');
 
-module.exports = {
+module.exports = (env, argv) => ({
   entry: './src/index.js',
   output: {
     path: path.resolve(__dirname, 'public'),
@@ -23,6 +24,14 @@ module.exports = {
     }),
     new Dotenv({
       systemvars: true, // load all system environment variables as well
+      safe: false,     // don't require .env file to exist
+      defaults: false, // don't load .env.example
+    }),
+    // Define environment variables for client-side code
+    // This is especially useful for GitHub Actions
+    new webpack.DefinePlugin({
+      'process.env.REACT_APP_GOOGLE_CLIENT_ID': JSON.stringify(process.env.GOOGLE_CLIENT_ID),
+      'process.env.REACT_APP_GOOGLE_API_KEY': JSON.stringify(process.env.GOOGLE_API_KEY),
     }),
   ],
   devServer: {
@@ -32,4 +41,4 @@ module.exports = {
     hot: true,
     port: 9000,
   },
-};
+});
