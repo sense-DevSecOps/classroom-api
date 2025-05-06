@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Classroom API Tool</title>
+    <!-- Load the Google API client library -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <!-- Load the Google Identity Services library -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Include the Google OAuth library -->
+    <script src="https://accounts.google.com/gsi/client" onload="initTokenClient()"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        
+        .header {
+            background-color: #4285f4;
+            color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .main-container {
+            display: flex;
+            height: calc(100vh - 54px);
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: white;
+            border-right: 1px solid #e0e0e0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .content-area {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .class-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+        
+        .class-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .class-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .class-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        
+        .class-option {
+            font-size: 13px;
+            color: #4285f4;
+            cursor: pointer;
+        }
+        
+        .class-option:hover {
+            text-decoration: underline;
+        }
+        
+        .selected {
+            background-color: #e8f0fe;
+            border-left: 4px solid #4285f4;
+        }
+        
+        button {
+            padding: 8px 12px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background-color: #3367d6;
+        }
+        
+        .config-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .config-section input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #4285f4;
+        }
+        
+        .error {
+            background-color: #fce8e6;
+            border-left: 4px solid #ea4335;
+        }
+        
+        #loading {
+            display: none;
+            margin: 10px 0;
+            color: #4285f4;
+        }
+        
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            overflow-x: auto;
+            max-height: 400px;
+            font-size: 13px;
+        }
+        
+        .data-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .data-card h2 {
+            margin-top: 0;
+            color: #4285f4;
+            font-size: 18px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table th, .data-table td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .data-table th {
+            background-color: #f5f5f5;
+        }
+        
+        .refresh-button {
+            background-color: transparent;
+            color: #4285f4;
+            border: 1px solid #4285f4;
+            padding: 6px 12px;
+            float: right;
+            font-size: 12px;
+        }
+        
+        .link-button {
+            color: #4285f4;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        #auth-section {
+            margin: 20px 0;
+        }
+        
+        #google-signin-button {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Google Classroom API Tool</h1>
+    </div>
+    
+    <div class="content-area" id="setup-area">
+        <div class="config-section">
+            <h2 id="credentials-header">API Configuration</h2>
+            <p id="credentials-info">API credentials are securely loaded via environment variables.</p>
+            <button id="save-credentials">Initialize API</button>
+            
+            <div style="margin-top: 15px; padding: 10px; background-color: #e8f0fe; border-left: 4px solid #1a73e8;">
+                <h3 style="margin-top: 0;">Common Issues Troubleshooting</h3>
+                <p><strong>"Not a valid origin for the client"</strong>: If you see this error, you need to add <code>http://localhost:9000</code> to the list of authorized JavaScript origins in your Google Cloud Console.</p>
+                <p><strong>"idpiframe_initialization_failed"</strong>: This error occurs because of outdated OAuth libraries. The code has been updated to use only the newer Google Identity Services.</p>
+            </div>
+        </div>
+        
+        <div id="status-message" class="status"></div>
+        <div id="loading">Loading data...</div>
+        
+        <div id="auth-section">
+            <!-- Google Sign In button will be inserted here -->
+            <div id="google-signin-button"></div>
+            <button id="signout-button" style="display:none;">Sign Out</button>
+        </div>
+    </div>
+    
+    <div class="main-container" id="main-container" style="display:none;">
+        <div class="sidebar" id="class-sidebar">
+            <div style="padding: 15px;">
+                <button id="refresh-classes" class="refresh-button">Refresh Classes</button>
+                <h2>My Classes</h2>
+            </div>
+            <div id="classes-list">
+                <!-- Classes will be listed here -->
+                <div class="class-item">
+                    <div class="class-loader">Loading classes...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <div class="data-card" id="welcome-card">
+                <h2>Welcome to Google Classroom Tool</h2>
+                <p>Select a class from the sidebar to view its details, students, or assignments.</p>
+            </div>
+            
+            <div class="data-card" id="class-detail-card" style="display:none;">
+                <h2 id="class-detail-title">Class Details</h2>
+                <div id="class-detail-content"></div>
+            </div>
+            
+            <div class="data-card" id="students-card" style="display:none;">
+                <h2 id="students-title">Students</h2>
+                <div id="students-content"></div>
+            </div>
+            
+            <div class="data-card" id="assignments-card" style="display:none;">
+                <h2 id="assignments-title">Assignments</h2>
+                <div id="assignments-content"></div>
+            </div>
+            
+            <div class="data-card" id="submissions-card" style="display:none;">
+                <h2 id="submissions-title">Assignment Submissions</h2>
+                <div>
+                    <p id="submission-instruction">Select an assignment to view submissions</p>
+                    <div id="assignment-selector" style="display:none;">
+                        <select id="coursework-select">
+                            <option value="">Select Assignment</option>
+                        </select>
+                        <button id="view-submissions">View Submissions</button>
+                    </div>
+                </div>
+                <div id="submissions-content"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
