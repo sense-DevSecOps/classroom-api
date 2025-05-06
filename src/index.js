@@ -1,9 +1,12 @@
 // Google Classroom API Tool - Main JavaScript file
 // This file uses environment variables to securely store API credentials
 
-// API credentials loaded from environment variables
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const API_KEY = process.env.GOOGLE_API_KEY;
+// Import configuration (for GitHub Pages deployment)
+import { GOOGLE_API_CONFIG } from './config.js';
+
+// API credentials from config file for GitHub Pages or from environment variables for other deployments
+const CLIENT_ID = GOOGLE_API_CONFIG?.CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
+const API_KEY = GOOGLE_API_CONFIG?.API_KEY || process.env.GOOGLE_API_KEY;
 
 // Store classes data
 let classesData = [];

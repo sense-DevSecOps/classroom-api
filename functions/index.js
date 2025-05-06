@@ -22,18 +22,17 @@ exports.getApiCredentials = onRequest({cors: true}, (request, response) => {
     timestamp: new Date().toISOString(),
   });
 
-  // In production, use these values from environment config
-  // const credentials = {
-  //   CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
-  //   API_KEY: process.env.GOOGLE_API_KEY,
-  // };
-
-  // For development/demo, use these values
+  // Get credentials from Firebase environment config
+  // Set with: firebase functions:config:set google.client_id="YOUR_ID" google.api_key="YOUR_KEY"
   const credentials = {
-    CLIENT_ID: "606661610781-t1fgt6kdqi8see1he837s6dqg1sbpi7l" +
-      ".apps.googleusercontent.com",
-    API_KEY: "AIzaSyCm4vaBRV7Xd-e57rDQRpry7C76Miv0H0E",
+    CLIENT_ID: process.env.GOOGLE_CLIENT_ID || process.env.FIREBASE_CONFIG?.google?.client_id,
+    API_KEY: process.env.GOOGLE_API_KEY || process.env.FIREBASE_CONFIG?.google?.api_key,
   };
+  
+  // Log warning if credentials are missing (but don't expose what's missing)
+  if (!credentials.CLIENT_ID || !credentials.API_KEY) {
+    logger.warn("API credentials missing or incomplete");
+  }
 
   response.json(credentials);
 });

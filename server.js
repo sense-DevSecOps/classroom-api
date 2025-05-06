@@ -3,12 +3,19 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 
-// Store API credentials in environment variables or load from a secure file
-// For demonstration, we'll set them here, but in production you should use env variables
+// Load environment variables
+require('dotenv').config();
+
+// Use API credentials from environment variables
 const API_CREDENTIALS = {
-  CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '606661610781-t1fgt6kdqi8see1he837s6dqg1sbpi7l.apps.googleusercontent.com',
-  API_KEY: process.env.GOOGLE_API_KEY || 'AIzaSyCm4vaBRV7Xd-e57rDQRpry7C76Miv0H0E'
+  CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+  API_KEY: process.env.GOOGLE_API_KEY
 };
+
+// Validate credentials are present
+if (!API_CREDENTIALS.CLIENT_ID || !API_CREDENTIALS.API_KEY) {
+  console.error('ERROR: API credentials missing. Please set GOOGLE_CLIENT_ID and GOOGLE_API_KEY in your .env file.');
+}
 
 const server = http.createServer((req, res) => {
   const parsedUrl = url.parse(req.url, true);
@@ -21,8 +28,8 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Serve static files
-  let filePath = path.join(__dirname, pathname === '/' ? 'google-classroom-tool.html' : pathname);
+  // Serve static files from public directory
+  let filePath = path.join(__dirname, 'public', pathname === '/' ? 'index.html' : pathname);
   const extname = path.extname(filePath);
   
   // Set content type based on file extension

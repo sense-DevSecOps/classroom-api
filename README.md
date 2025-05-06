@@ -1,20 +1,24 @@
-# Google Classroom API Tool - Firebase Deployment
+# Google Classroom API Tool
 
-This tool provides an interface to the Google Classroom API. It's configured to be deployed on Firebase Hosting with Firebase Cloud Functions.
+This tool provides an interface to the Google Classroom API. It can be run locally or deployed to Firebase Hosting.
 
 ## Project Structure
 
 ```
 classroom-api/
-├── public/                  # Static files for Firebase hosting
-│   ├── index.html           # Main application (Google Classroom Tool)
-│   └── classroom-mock.html  # Mock classroom file
-├── functions/               # Firebase Cloud Functions
-│   ├── index.js             # Functions implementation (API credentials)
-│   └── package.json         # Functions dependencies
-├── firebase.json            # Firebase configuration
-├── .firebaserc              # Firebase project settings
-└── package.json             # Root project dependencies
+├── src/                    # Source files
+│   ├── index.html          # Main HTML template
+│   └── index.js            # Main JavaScript entry point
+├── public/                 # Generated files (built by webpack)
+│   └── index.html          # Built HTML page with bundled scripts
+├── functions/              # Firebase Cloud Functions
+│   ├── index.js            # Functions implementation
+│   └── package.json        # Functions dependencies
+├── server.js              # Local development server
+├── webpack.config.js      # Webpack build configuration
+├── firebase.json          # Firebase configuration
+├── .firebaserc            # Firebase project settings
+└── package.json           # Project dependencies and scripts
 ```
 
 ## Deployment Instructions
