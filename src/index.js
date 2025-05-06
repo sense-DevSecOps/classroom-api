@@ -105,23 +105,66 @@ function setLoading(isLoading) {
 async function initializeGoogleApiClient() {
     if (!CLIENT_ID || !API_KEY) {
         showMessage("Missing API credentials. Please check your environment configuration.", true);
+        console.error("API credentials are missing or invalid", { 
+            clientIdPresent: !!CLIENT_ID, 
+            apiKeyPresent: !!API_KEY 
+        });
         return;
     }
+
+    // Log credentials status (without showing the actual values)
+    console.log("Initializing with credentials", { 
+        clientIdLength: CLIENT_ID ? CLIENT_ID.length : 0,
+        apiKeyLength: API_KEY ? API_KEY.length : 0,
+        clientIdPrefix: CLIENT_ID ? CLIENT_ID.substring(0, 5) + '...' : 'missing',
+    });
 
     setLoading(true);
     showMessage("Loading Google API Client...");
     
+    // Check if gapi is available
+    if (!window.gapi) {
+        setLoading(false);
+        showMessage("Google API client not loaded. Please check your internet connection and try again.", true);
+        console.error("gapi not available");
+        return;
+    }
+    
     try {
+        console.log("Starting Google API client loading");
         // Initialize the gapi.client with API key and discovery docs
-        await gapi.load('client', async () => {
-            await gapi.client.init({
-                apiKey: API_KEY,
-                discoveryDocs: ["https://classroom.googleapis.com/$discovery/rest?version=v1"]
-            });
+        await new Promise((resolve, reject) => {
+            // Add timeout to catch hanging requests
+            const timeout = setTimeout(() => {
+                reject(new Error("Timeout loading Google API client"));
+            }, 15000); // 15 second timeout
             
-            showMessage("API client loaded. Initializing authentication...");
-            initializeGoogleAuth();
+            gapi.load('client', {
+                callback: () => {
+                    clearTimeout(timeout);
+                    resolve();
+                },
+                onerror: (error) => {
+                    clearTimeout(timeout);
+                    reject(error);
+                },
+                timeout: 10000, // 10 second timeout
+                ontimeout: () => {
+                    clearTimeout(timeout);
+                    reject(new Error("Google API client load timed out"));
+                }
+            });
         });
+        
+        console.log("GAPI client loaded, initializing with API key");
+        await gapi.client.init({
+            apiKey: API_KEY,
+            discoveryDocs: ["https://classroom.googleapis.com/$discovery/rest?version=v1"]
+        });
+        
+        console.log("API client initialization successful");
+        showMessage("API client loaded. Initializing authentication...");
+        initializeGoogleAuth();
     } catch (error) {
         setLoading(false);
         console.error("Error initializing the API client", error);
@@ -133,23 +176,37 @@ async function initializeGoogleApiClient() {
 function initializeGoogleAuth() {
     setLoading(true);
     
+    // Check if google auth is available
+    if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+        console.error("Google Identity Services not available");
+        showMessage("Google authentication services not loaded. Please check your internet connection and try again.", true);
+        setLoading(false);
+        return;
+    }
+    
+    console.log("Initializing Google authentication with client ID");
+    
     try {
         // Initialize the token client for OAuth 2.0 flow
         tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
             scope: SCOPES,
             callback: (tokenResponse) => {
+                console.log("Token response received", tokenResponse ? "with data" : "empty");
+                
                 if (tokenResponse && tokenResponse.access_token) {
                     // Store the access token
                     currentAccessToken = tokenResponse.access_token;
                     isAuthenticated = true;
                     
+                    console.log("Authentication successful, updating UI");
                     // Update UI for signed-in state
                     updateUIForSignIn(true);
                     
                     // Load user classes
                     fetchClasses();
                 } else {
+                    console.error("No access token in response", tokenResponse);
                     showMessage("Authentication failed. No access token received.", true);
                     updateUIForSignIn(false);
                 }
@@ -158,12 +215,13 @@ function initializeGoogleAuth() {
             },
             error_callback: (error) => {
                 console.error("Authentication error", error);
-                showMessage("Authentication error: " + error.message, true);
+                showMessage("Authentication error: " + (error.message || "Unknown error"), true);
                 updateUIForSignIn(false);
                 setLoading(false);
             }
         });
         
+        console.log("Token client initialized successfully");
         // Setup the sign-in button
         setupSignInButton();
         
@@ -239,10 +297,16 @@ function fetchClasses() {
     classesList.innerHTML = '';
     classesData = [];
     
+    // Log the request for debugging
+    console.log("Fetching classes with all states");
+    
+    // Fetch all classes (active, archived, provisioned, etc.)
     gapi.client.classroom.courses.list({
-        pageSize: 20,
-        courseStates: ["ACTIVE"]
+        pageSize: 100,  // Increased to maximum allowed
+        // Include all possible course states to show everything
+        courseStates: ["ACTIVE", "ARCHIVED", "PROVISIONED", "DECLINED", "SUSPENDED"]
     }).then((response) => {
+        console.log("Received classes response:", response);
         const courses = response.result.courses || [];
         classesData = courses;
         
